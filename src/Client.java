@@ -1,5 +1,5 @@
 /**
- * Created by etbina on 2017-03-02.
+ * Created by Etienne BINET on 2017-03-02.
  */
 public class Client {
 }
