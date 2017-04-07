@@ -18,6 +18,7 @@ public class Server {
     private static InetAddress ipAdress;
     private static int portNumber = 5001;
     private static int surveyTime = 0;
+    public enum State {ACCEPTED, REFUSED;}
 
 
     //Methode appele au lancement du server
@@ -62,19 +63,24 @@ public class Server {
             System.out.println(surveyTime);
 
             //Une fois le serveur lancé on demande au prof de poser sa question, taille maximale 500 caractères
-//            System.out.println("Veuillez poser votre question :");
-//            BufferedReader stdIn = new BufferedReader( new InputStreamReader( System.in ), 500 );
-
             //Question posée au prof
             Scanner sc = new Scanner(System.in);
             System.out.println("Veuillez poser votre question :");
             String str = sc.nextLine();
             System.out.println("Vous avez saisi : " + str);
 
+            //si la question est trop longue le serveur s'arrete
+            if (str.length()> 500){
+                System.out.println("Question trop longue elle doit etre inférieure à 500 caractères");
+                return;
+            }
+
             //On écrit la question dans le journal
-            PrintWriter writer = new PrintWriter("journal.txt", "UTF-8");
-            writer.println(str);
-            writer.close();
+            FileWriter fw = new FileWriter("journal.txt", true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            PrintWriter out = new PrintWriter(bw);
+            out.println(str);
+            out.close();
 
             //Le serveur ne commence à écouter sur son port seulement si une question a été posée
             if(str != null) {
@@ -84,18 +90,21 @@ public class Server {
                 while (true) {
                     delta = (System.currentTimeMillis() - startTime)/1000;
                     System.out.println(delta);
+                    Socket clientSocket = serverSocket.accept();
                     //si le délais n'est pas dépassé
                     if(delta < surveyTime){
                         //a chaque fois q'un client se connecte
-                        Socket clientSocket = serverSocket.accept();
-                        Task task = new Task(clientSocket, str);
+                        Task task = new Task(clientSocket, str, true);
                         task.start();
                     }else{
+                        //quand le temps est dépassé le serveur quite en fermant la socket
+                        Task task = new Task(clientSocket, "Temps dépassé", false);
+                        task.start();
+                        serverSocket.close();
                         return;
                     }
 
                 }
-                //serverSocket.close();
             }
         }
         //sinon le server ne se lance pas
